@@ -27,10 +27,90 @@
 
         <div id="post">
             <ul>
-                <li><a href="https://storage.googleapis.com/pub-tools-public-publication-data/pdf/16cb30b4b92fd4989b8619a61752a2387c6dd474.pdf">Paper</a></li>
+                <li>
+                    <a href="https://storage.googleapis.com/pub-tools-public-publication-data/pdf/16cb30b4b92fd4989b8619a61752a2387c6dd474.pdf">Paper</a>
+                </li>
+                <li>
+                    <a href="https://cs.brown.edu/courses/csci1951-a/res/static/lec08_mapreduce.pdf">Slides</a>
+                </li>
+            </ul>
+
+            <blockquote>
+                <p>“MapReduce exploits a restricted programming model to parallelize the user
+                    program automatically and to provide transparent fault-tolerance”</p>
+            </blockquote>
+
+            <p>Restricted programming model: a model whose designers omit features because they're "too complex" or because some programmers have used them to write bad code. In short, restricting the API to
+                give greater guarantees.</p>
+
+            <ul>
+                <li>Intermediate keys and values must be the same type as the output keys and
+                    values. This is not the case with the current Hadoop implementation.
+                </li>
+                <li>The authors also mention that MapReduce could be applied to a shared memory
+                    system or NUMA multi-processor system
+                </li>
+                <li>Notes on Execution
+                    <ul>
+                        <li>Intermediate values are written to local disk periodically, partitioned
+                            by key
+                            <ul>
+                                <li>It sends these locations to the master</li>
+                            </ul>
+                        </li>
+                        <li>Reducer learns about the locations from the master and reads the appropriate
+                            partitions via RPC directly from the Mapper
+                        </li>
+                        <li>Once all of the data is received, the reducer sorts the data, possibly with
+                            an external sort
+                            <ul>
+                                <li>I wonder if some speculative partial reduction work could be done or some
+                                    sort of heap style sort that could start immediately
+                                </li>
+                                <li>However, it’s probably better use of the machine to have it running other
+                                    work instead
+                                </li>
+                            </ul>
+                        </li>
+                        <li>Reducer output goes to GFS
+                            <ul>
+                                <li>Once the reducer finishes, it atomically renames the output file</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li>Master does not currently checkpoint, the user must rerun the job
+                    <ul>
+                        <li>The authors say it would be easy</li>
+                    </ul>
+                </li>
+                <li>At the time, network bandwidth was scarce
+                    <ul>
+                        <li>They had the cluster scheduler assign map tasks on the same machines that
+                            held the data in GFS or very close to the same machine
+                        </li>
+                        <li>Wonder how it change now with better network traffic from Google</li>
+                    </ul>
+                </li>
+                <li>ability to skip bad records
+                    <ul>
+                        <li>When an error occurs (i.e. segfault), they have a handler that sends a quick
+                            UDP packet to the master with the offset
+                        </li>
+                        <li>If the master receives this message from two workers, when it reschedules
+                            the task, it will notify the worker to skip the record
+                        </li>
+                        <li>https://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapred/SkipBadRecords.html</li>
+                    </ul>
+                </li>
+                <li>Local execution: an alternative im- plementation of the MapReduce library that sequentially executes all of the work for a MapReduce operation on the local machine, where the user can debug
+                    with GDB
+                </li>
+                <li>Counter values are piggybacked on the heartbeat response</li>
             </ul>
 
         </div>
+
         <hr>
     </div>
     <footer>
