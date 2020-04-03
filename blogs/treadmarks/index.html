@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+    <title>TreadMarks: Shared Memory Computing on Networks of Workstations - Dung Le</title>
+
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width">
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/yeti/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/media/css/pygments.css">
+    <link href='//fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="/media/css/main.css">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+</head>
+<body>
+
+<div id="container-main" class="container clearfix">
+    <div style="margin:20px">
+        <script type="text/javascript"
+                src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <div id="content-header">
+            <h1>TreadMarks: Shared Memory Computing on Networks of Workstations <small>- Cristiana Amza, Alan L. Cox, Sandhya Dwarkadas, Pete Keleher,
+Honghui Lu, Ramakrishnan Ra jamony, Weimin Yu and Willy Zwaenepoel, 1996</small></h1>
+        </div>
+
+        <div id="post">
+            <ul>
+                <li>
+                    <a href="https://www.cs.rochester.edu/u/sandhya/papers/computer96.pdf">Paper</a>
+                </li>
+            </ul>
+
+            <p>Restricted programming model: a model whose designers omit features because they're "too complex" or because some programmers have used them to write bad code. In short, restricting the API to
+                give greater guarantees.</p>
+
+            <ul>
+                <li>Intermediate keys and values must be the same type as the output keys and
+                    values. This is not the case with the current Hadoop implementation.
+                </li>
+                <li>The authors also mention that MapReduce could be applied to a shared memory
+                    system or NUMA multi-processor system
+                </li>
+                <li>Notes on Execution
+                    <ul>
+                        <li>Intermediate values are written to local disk periodically, partitioned
+                            by key
+                            <ul>
+                                <li>It sends these locations to the master</li>
+                            </ul>
+                        </li>
+                        <li>Reducer learns about the locations from the master and reads the appropriate
+                            partitions via RPC directly from the Mapper
+                        </li>
+                        <li>Once all of the data is received, the reducer sorts the data, possibly with
+                            an external sort
+                            <ul>
+                                <li>I wonder if some speculative partial reduction work could be done or some
+                                    sort of heap style sort that could start immediately
+                                </li>
+                                <li>However, it’s probably better use of the machine to have it running other
+                                    work instead
+                                </li>
+                            </ul>
+                        </li>
+                        <li>Reducer output goes to GFS
+                            <ul>
+                                <li>Once the reducer finishes, it atomically renames the output file</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li>Master does not currently checkpoint, the user must rerun the job
+                    <ul>
+                        <li>The authors say it would be easy</li>
+                    </ul>
+                </li>
+                <li>At the time, network bandwidth was scarce
+                    <ul>
+                        <li>They had the cluster scheduler assign map tasks on the same machines that
+                            held the data in GFS or very close to the same machine
+                        </li>
+                        <li>Wonder how it change now with better network traffic from Google</li>
+                    </ul>
+                </li>
+                <li>ability to skip bad records
+                    <ul>
+                        <li>When an error occurs (i.e. segfault), they have a handler that sends a quick
+                            UDP packet to the master with the offset
+                        </li>
+                        <li>If the master receives this message from two workers, when it reschedules
+                            the task, it will notify the worker to skip the record
+                        </li>
+                        <li>https://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapred/SkipBadRecords.html</li>
+                    </ul>
+                </li>
+                <li>Local execution: an alternative im- plementation of the MapReduce library that sequentially executes all of the work for a MapReduce operation on the local machine, where the user can debug
+                    with GDB
+                </li>
+                <li>Counter values are piggybacked on the heartbeat response</li>
+            </ul>
+
+        </div>
+
+        <hr>
+    </div>
+    <footer>
+        <div class="row">
+            <div class="col-lg-12">
+
+                <br/>
+                <br>
+                <p>&copy; Dung Le - dle8@u.rochester.edu</p>
+            </div>
+
+        </div>
+
+    </footer>
+</div> <!-- /container -->
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+
+<script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-160806664-1']);
+    _gaq.push(['_setDomainName', '.letuandung492.github.io/']);
+    _gaq.push(['_trackPageview']);
+
+    (function () {
+        var ga = document.createElement('script');
+        ga.type = 'text/javascript';
+        ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'stats.g.doubleclick.net/dc.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(ga, s);
+    })();
+
+</script>
+</body>
+</html>
